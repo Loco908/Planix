@@ -20,8 +20,12 @@ from django.views.generic import TemplateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # Rutas de autenticación (login, logout, password_reset, etc.)
+    # Rutas de autenticación
     path('', include('django.contrib.auth.urls')),
-    # Página principal temporal
-    path('', TemplateView.as_view(template_name='base.html'), name='home'),
+    
+    # Rutas de la app Projects
+    path('projects/', include('projects.urls')),
+    
+    # Redirigir inicio a proyectos (o login si no está autenticado)
+    path('', include('projects.urls')),
 ]

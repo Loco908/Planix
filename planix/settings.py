@@ -127,7 +127,7 @@ STATICFILES_DIRS = [
 ]
 
 # Authentication Redirects
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = '/projects/'
 LOGOUT_REDIRECT_URL = '/login/'
 
 # Default primary key field type

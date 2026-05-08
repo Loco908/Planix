@@ -26,6 +26,9 @@ urlpatterns = [
     # Rutas de la app Projects
     path('projects/', include('projects.urls')),
     
+    # Rutas de la app Scrum (Backlog, Kanban, etc.)
+    path('scrum/', include('scrum.urls')),
+    
     # Redirigir inicio a proyectos (o login si no está autenticado)
     path('', include('projects.urls')),
 ]

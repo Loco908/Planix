@@ -22,6 +22,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # Rutas de autenticación
     path('', include('django.contrib.auth.urls')),
+    path('social-auth/', include('social_django.urls', namespace='social')),
     
     # Rutas de la app Projects
     path('projects/', include('projects.urls')),

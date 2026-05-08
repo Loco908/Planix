@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy, reverse
+import django.views.generic
 from django.views.generic import ListView, CreateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
@@ -61,6 +62,33 @@ class ProjectMemberCreateView(LoginRequiredMixin, CreateView):
             return self.form_invalid(form)
             
         messages.success(self.request, f"Integrante {form.instance.user.username} agregado.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('projects:detail', kwargs={'pk': self.project.pk})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['project'] = self.project
+        return context
+
+class ProjectMemberUpdateView(LoginRequiredMixin, django.views.generic.UpdateView):
+    model = ProjectMember
+    fields = ['role']
+    template_name = 'projects/member_form.html'
+    pk_url_kwarg = 'member_id'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.member = get_object_or_404(ProjectMember, pk=self.kwargs['member_id'])
+        self.project = self.member.project
+        # Solo el PM del proyecto puede editar roles
+        if not ProjectMember.objects.filter(project=self.project, user=request.user, role='PM').exists():
+            from django.http import Http404
+            raise Http404("No tienes permisos de Project Manager.")
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        messages.success(self.request, f"Rol de {self.member.user.username} actualizado a {self.member.get_role_display()}.")
         return super().form_valid(form)
 
     def get_success_url(self):

@@ -21,7 +21,11 @@
                         <div class="list-group-item flex-column align-items-start">
                             <div class="d-flex w-100 justify-content-between">
                                 <h6 class="mb-1 fw-bold">{{ story.title }}</h6>
-                                <small class="text-muted">{{ story.created_at|date:"d M" }}</small>
+                                <div>
+                                    <small class="text-muted me-2">{{ story.created_at|date:"d M" }}</small>
+                                    <a href="{% url 'scrum:story_edit' story.pk %}" class="btn btn-sm btn-outline-secondary p-0 px-1 border-0">✏️</a>
+                                    <a href="{% url 'scrum:story_delete' story.pk %}" class="btn btn-sm btn-outline-danger p-0 px-1 border-0">🗑️</a>
+                                </div>
                             </div>
                             <p class="mb-1 text-muted small">{{ story.description|truncatewords:20 }}</p>
                         </div>
@@ -49,6 +53,7 @@
                             <strong>{{ member.user.username }}</strong><br>
                             <span class="badge bg-secondary">{{ member.get_role_display }}</span>
                         </div>
+                        <a href="{% url 'projects:edit_member' member.pk %}" class="btn btn-sm btn-light">✏️</a>
                     </li>
                 {% empty %}
                     <li class="list-group-item text-muted">Sin integrantes.</li>

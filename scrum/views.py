@@ -14,8 +14,11 @@ class UserStoryCreateView(LoginRequiredMixin, CreateView):
     template_name = 'scrum/userstory_form.html'
 
     def dispatch(self, request, *args, **kwargs):
-        # Asegurar que el proyecto existe y el usuario pertenece a él
-        self.project = get_object_or_404(Project, pk=self.kwargs['project_id'], members__user=request.user)
+        self.project = get_object_or_404(Project, pk=self.kwargs['project_id'])
+        # RBAC: Solo PM y PO pueden crear historias
+        if not self.project.members.filter(user=request.user, role__in=['PM', 'PO']).exists():
+            from django.http import Http404
+            raise Http404("Solo el Product Owner o Project Manager pueden crear historias.")
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -29,4 +32,47 @@ class UserStoryCreateView(LoginRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['project'] = self.project
+        return context
+
+from django.views.generic import UpdateView, DeleteView
+
+class UserStoryUpdateView(LoginRequiredMixin, UpdateView):
+    model = UserStory
+    form_class = UserStoryForm
+    template_name = 'scrum/userstory_form.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.story = self.get_object()
+        if not self.story.project.members.filter(user=request.user, role__in=['PM', 'PO']).exists():
+            from django.http import Http404
+            raise Http404("No tienes permisos para editar esta historia.")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        messages.success(self.request, "Historia actualizada.")
+        return reverse('projects:detail', kwargs={'pk': self.story.project.pk})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['project'] = self.story.project
+        return context
+
+class UserStoryDeleteView(LoginRequiredMixin, DeleteView):
+    model = UserStory
+    template_name = 'scrum/userstory_confirm_delete.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.story = self.get_object()
+        if not self.story.project.members.filter(user=request.user, role__in=['PM', 'PO']).exists():
+            from django.http import Http404
+            raise Http404("No tienes permisos para borrar esta historia.")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        messages.success(self.request, "Historia eliminada.")
+        return reverse('projects:detail', kwargs={'pk': self.story.project.pk})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['project'] = self.story.project
         return context

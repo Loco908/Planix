@@ -49,7 +49,8 @@ class ProjectMemberCreateView(LoginRequiredMixin, CreateView):
     template_name = 'projects/member_form.html'
 
     def dispatch(self, request, *args, **kwargs):
-        self.project = get_object_or_404(Project, pk=self.kwargs['pk'], members__user=request.user)
+        # Asegurar que el proyecto existe y el usuario es Project Manager (PM)
+        self.project = get_object_or_404(Project, pk=self.kwargs['pk'], members__user=request.user, members__role='PM')
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):

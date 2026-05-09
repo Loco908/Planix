@@ -44,7 +44,9 @@
         <div class="card shadow-sm">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Equipo</h5>
+                {% if is_pm %}
                 <a href="{% url 'projects:add_member' project.pk %}" class="btn btn-sm btn-outline-primary">+ Integrante</a>
+                {% endif %}
             </div>
             <ul class="list-group list-group-flush">
                 {% for member in project.members.all %}
@@ -53,7 +55,12 @@
                             <strong>{{ member.user.username }}</strong><br>
                             <span class="badge bg-secondary">{{ member.get_role_display }}</span>
                         </div>
-                        <a href="{% url 'projects:edit_member' member.pk %}" class="btn btn-sm btn-light">✏️</a>
+                        {% if is_pm %}
+                        <div>
+                            <a href="{% url 'projects:edit_member' member.pk %}" class="btn btn-sm btn-light p-1">✏️</a>
+                            <a href="{% url 'projects:delete_member' member.pk %}" class="btn btn-sm btn-outline-danger p-1 border-0">🗑️</a>
+                        </div>
+                        {% endif %}
                     </li>
                 {% empty %}
                     <li class="list-group-item text-muted">Sin integrantes.</li>

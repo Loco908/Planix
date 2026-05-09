@@ -44,6 +44,12 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
     def get_queryset(self):
         return Project.objects.filter(members__user=self.request.user).distinct()
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Check if current user is PM for this project to conditionally render UI elements
+        context['is_pm'] = self.object.members.filter(user=self.request.user, role='PM').exists()
+        return context
+
 class ProjectMemberCreateView(LoginRequiredMixin, CreateView):
     model = ProjectMember
     form_class = ProjectMemberForm
@@ -98,6 +104,38 @@ class ProjectMemberUpdateView(LoginRequiredMixin, django.views.generic.UpdateVie
         return super().form_valid(form)
 
     def get_success_url(self):
+        return reverse('projects:detail', kwargs={'pk': self.project.pk})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['project'] = self.project
+        return context
+
+class ProjectMemberDeleteView(LoginRequiredMixin, django.views.generic.DeleteView):
+    model = ProjectMember
+    template_name = 'projects/member_confirm_delete.html'
+    pk_url_kwarg = 'member_id'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.member = get_object_or_404(ProjectMember, pk=self.kwargs['member_id'])
+        self.project = self.member.project
+        
+        # Solo el PM del proyecto puede eliminar roles
+        if not ProjectMember.objects.filter(project=self.project, user=request.user, role='PM').exists():
+            messages.error(request, "Acceso denegado: Solo el Project Manager puede eliminar integrantes del equipo.")
+            from django.shortcuts import redirect
+            return redirect('projects:detail', pk=self.project.pk)
+            
+        # Evitar que el PM se elimine a sí mismo si es el único
+        if self.member.user == request.user:
+            messages.error(request, "No puedes eliminarte a ti mismo del proyecto.")
+            from django.shortcuts import redirect
+            return redirect('projects:detail', pk=self.project.pk)
+            
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        messages.success(self.request, f"Integrante {self.member.user.username} eliminado del proyecto.")
         return reverse('projects:detail', kwargs={'pk': self.project.pk})
 
     def get_context_data(self, **kwargs):

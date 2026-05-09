@@ -17,8 +17,9 @@ class UserStoryCreateView(LoginRequiredMixin, CreateView):
         self.project = get_object_or_404(Project, pk=self.kwargs['project_id'])
         # RBAC: Solo PM y PO pueden crear historias
         if not self.project.members.filter(user=request.user, role__in=['PM', 'PO']).exists():
-            from django.http import Http404
-            raise Http404("Solo el Product Owner o Project Manager pueden crear historias.")
+            messages.error(request, "No tienes permisos para crear esta historia. Solo el PM o PO pueden hacerlo.")
+            from django.shortcuts import redirect
+            return redirect('projects:detail', pk=self.project.pk)
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -44,8 +45,9 @@ class UserStoryUpdateView(LoginRequiredMixin, UpdateView):
     def dispatch(self, request, *args, **kwargs):
         self.story = self.get_object()
         if not self.story.project.members.filter(user=request.user, role__in=['PM', 'PO']).exists():
-            from django.http import Http404
-            raise Http404("No tienes permisos para editar esta historia.")
+            messages.error(request, "No tienes permisos para editar esta historia. Solo el PM o PO pueden hacerlo.")
+            from django.shortcuts import redirect
+            return redirect('projects:detail', pk=self.story.project.pk)
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
@@ -64,8 +66,9 @@ class UserStoryDeleteView(LoginRequiredMixin, DeleteView):
     def dispatch(self, request, *args, **kwargs):
         self.story = self.get_object()
         if not self.story.project.members.filter(user=request.user, role__in=['PM', 'PO']).exists():
-            from django.http import Http404
-            raise Http404("No tienes permisos para borrar esta historia.")
+            messages.error(request, "No tienes permisos para borrar esta historia. Solo el PM o PO pueden hacerlo.")
+            from django.shortcuts import redirect
+            return redirect('projects:detail', pk=self.story.project.pk)
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):

@@ -50,8 +50,13 @@ class ProjectMemberCreateView(LoginRequiredMixin, CreateView):
     template_name = 'projects/member_form.html'
 
     def dispatch(self, request, *args, **kwargs):
-        # Asegurar que el proyecto existe y el usuario es Project Manager (PM)
-        self.project = get_object_or_404(Project, pk=self.kwargs['pk'], members__user=request.user, members__role='PM')
+        # Asegurar que el proyecto existe y el usuario es miembro
+        self.project = get_object_or_404(Project, pk=self.kwargs['pk'], members__user=request.user)
+        # Solo el PM puede invitar
+        if not self.project.members.filter(user=request.user, role='PM').exists():
+            messages.error(request, "Acceso denegado: Solo el Project Manager puede agregar integrantes al equipo.")
+            from django.shortcuts import redirect
+            return redirect('projects:detail', pk=self.project.pk)
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -83,8 +88,9 @@ class ProjectMemberUpdateView(LoginRequiredMixin, django.views.generic.UpdateVie
         self.project = self.member.project
         # Solo el PM del proyecto puede editar roles
         if not ProjectMember.objects.filter(project=self.project, user=request.user, role='PM').exists():
-            from django.http import Http404
-            raise Http404("No tienes permisos de Project Manager.")
+            messages.error(request, "Acceso denegado: Solo el Project Manager puede modificar los roles del equipo.")
+            from django.shortcuts import redirect
+            return redirect('projects:detail', pk=self.project.pk)
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):

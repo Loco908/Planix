@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Sprints - {{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Sprints de {{ project.name }}</h2>
+        <div>
+            <a href="{% url 'projects:detail' project.pk %}" class="btn btn-secondary">Volver al Proyecto</a>
+            {% if is_pm %}
+            <a href="{% url 'scrum:sprint_create' project.pk %}" class="btn btn-primary">Nuevo Sprint</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        {% for sprint in sprints %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 {% if sprint.status == 'Activo' %}border-success{% elif sprint.status == 'Planeado' %}border-primary{% else %}border-secondary{% endif %}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ sprint.name }}</h5>
+                    <span class="badge {% if sprint.status == 'Activo' %}bg-success{% elif sprint.status == 'Planeado' %}bg-primary{% else %}bg-secondary{% endif %}">
+                        {{ sprint.status }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <p class="mb-1"><strong>Inicio:</strong> {{ sprint.start_date|date:"d M Y" }}</p>
+                    <p class="mb-3"><strong>Fin:</strong> {{ sprint.end_date|date:"d M Y" }}</p>
+                    
+                    <a href="{% url 'scrum:kanban' sprint.pk %}" class="btn btn-outline-primary w-100 mb-2">Ver Tablero Kanban</a>
+                    
+                    {% if is_pm %}
+                    <a href="{% url 'scrum:sprint_edit' sprint.pk %}" class="btn btn-outline-secondary w-100">Editar Sprint</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center text-muted">
+            <p>No hay sprints creados en este proyecto.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

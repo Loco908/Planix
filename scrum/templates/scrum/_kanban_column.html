@@ -1,0 +1,60 @@
+<div class="kanban-column">
+    <div class="kanban-column-header d-flex justify-content-between">
+        <span>{{ title }}</span>
+        <span class="badge bg-secondary rounded-pill">{{ tickets.count }}</span>
+    </div>
+    <div class="kanban-cards">
+        {% for ticket in tickets %}
+        <div class="kanban-card {% if ticket.assigned_to == request.user %}assigned-to-me{% endif %} {% if ticket.status == 'Blocked' %}blocked{% endif %}">
+            <div class="d-flex justify-content-between align-items-start mb-1">
+                <span class="ticket-id">{{ ticket.get_code }}</span>
+                <span class="badge bg-info text-dark" style="font-size:0.7rem;">{{ ticket.type }}</span>
+            </div>
+            <div class="ticket-title">{{ ticket.title }}</div>
+            
+            <div class="ticket-meta mb-2">
+                <div><i class="bi bi-person"></i> {{ ticket.assigned_to.username|default:"Sin asignar" }}</div>
+                {% if ticket.due_date %}
+                <div class="{% if ticket.remaining_days and ticket.remaining_days < 0 %}text-danger{% endif %}">
+                    <i class="bi bi-calendar"></i> {{ ticket.due_date|date:"d M" }}
+                    {% if ticket.remaining_days != None %}
+                        ({% if ticket.remaining_days < 0 %}Vencido{% else %}{{ ticket.remaining_days }}d{% endif %})
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                <span class="badge {% if ticket.value == 'Alta' %}bg-danger{% elif ticket.value == 'Media' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                    {{ ticket.value }}
+                </span>
+                <span class="badge bg-light text-dark border">{{ ticket.effort }} hrs</span>
+            </div>
+
+            <!-- Formulario de estado incrustado para Devs y PMs -->
+            <div class="mt-2">
+                <form action="{% url 'scrum:ticket_status' ticket.pk %}" method="post">
+                    {% csrf_token %}
+                    {{ status_form.status }}
+                    <!-- Truco para preseleccionar el valor actual en el form de estado que viene limpio del context -->
+                    <script>
+                        (function() {
+                            var selects = document.querySelectorAll('form[action="{% url 'scrum:ticket_status' ticket.pk %}"] select');
+                            if(selects.length > 0) {
+                                selects[0].value = "{{ ticket.status }}";
+                            }
+                        })();
+                    </script>
+                </form>
+            </div>
+
+            {% if is_pm %}
+            <div class="d-flex justify-content-end mt-2 gap-1">
+                <a href="{% url 'scrum:ticket_edit' ticket.pk %}" class="btn btn-sm btn-outline-secondary py-0 px-1"><i class="bi bi-pencil"></i></a>
+                <a href="{% url 'scrum:ticket_delete' ticket.pk %}" class="btn btn-sm btn-outline-danger py-0 px-1"><i class="bi bi-trash"></i></a>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>

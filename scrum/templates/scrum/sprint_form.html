@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}{% if form.instance.pk %}Editar Sprint{% else %}Nuevo Sprint{% endif %} - {{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">{% if form.instance.pk %}Editar Sprint{% else %}Nuevo Sprint{% endif %}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                <p class="mb-0">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Nombre del Sprint</label>
+                            {{ form.name }}
+                            {{ form.name.errors }}
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Fecha de Inicio</label>
+                                {{ form.start_date }}
+                                {{ form.start_date.errors }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Fecha de Fin</label>
+                                {{ form.end_date }}
+                                {{ form.end_date.errors }}
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">Estado</label>
+                            {{ form.status }}
+                            {{ form.status.errors }}
+                            {% if form.status.errors %}
+                            <small class="text-danger">Recuerda que solo puede haber un sprint Activo por proyecto.</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'scrum:sprint_list' project.pk %}" class="btn btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

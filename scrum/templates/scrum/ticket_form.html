@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}{% if form.instance.pk %}Editar Ticket{% else %}Nuevo Ticket{% endif %} - {{ sprint.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">{% if form.instance.pk %}Editar Ticket: {{ form.instance.get_code }}{% else %}Nuevo Ticket{% endif %}</h4>
+                    <span>Sprint: {{ sprint.name }}</span>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                <p class="mb-0">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label class="form-label">Historia de Usuario</label>
+                                    {{ form.user_story }}
+                                    {{ form.user_story.errors }}
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Título</label>
+                                    {{ form.title }}
+                                    {{ form.title.errors }}
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Descripción</label>
+                                    {{ form.description }}
+                                    {{ form.description.errors }}
+                                </div>
+                                
+                                <!-- Criterios de aceptación dinámicos -->
+                                <h5 class="mt-4 border-bottom pb-2">Criterios de Aceptación</h5>
+                                {{ criterion_formset.management_form }}
+                                <div id="criterion-formset-container">
+                                    {% for form in criterion_formset %}
+                                    <div class="criterion-form-row mb-2 d-flex align-items-center gap-2">
+                                        <div class="flex-grow-1">
+                                            {{ form.id }}
+                                            {{ form.description }}
+                                        </div>
+                                        {% if form.instance.pk %}
+                                            <div class="form-check ms-2">
+                                                {{ form.DELETE }} <label class="form-check-label text-danger">Eliminar</label>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-success mt-2" id="add-criterion-btn">
+                                    <i class="bi bi-plus-circle"></i> Agregar Criterio
+                                </button>
+                                <!-- Fin Criterios -->
+                            </div>
+
+                            <div class="col-md-4 border-left">
+                                <div class="mb-3">
+                                    <label class="form-label">Tipo</label>
+                                    {{ form.type }}
+                                    {{ form.type.errors }}
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Prioridad (Valor)</label>
+                                    {{ form.value }}
+                                    {{ form.value.errors }}
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Estado</label>
+                                    {{ form.status }}
+                                    {{ form.status.errors }}
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Esfuerzo (hrs)</label>
+                                    {{ form.effort }}
+                                    {{ form.effort.errors }}
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Asignado a (Dueño)</label>
+                                    {{ form.assigned_to }}
+                                    {{ form.assigned_to.errors }}
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Responsable de Pruebas</label>
+                                    {{ form.tester }}
+                                    {{ form.tester.errors }}
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Fecha Objetivo</label>
+                                    {{ form.due_date }}
+                                    {{ form.due_date.errors }}
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Dependencias</label>
+                                    {{ form.dependencies }}
+                                    <small class="text-muted d-block">Mantén presionado Ctrl (o Cmd en Mac) para seleccionar múltiples tickets.</small>
+                                    {{ form.dependencies.errors }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                {% if form.instance.pk %}
+                                <small class="text-muted">Última actualización: {{ form.instance.updated_at|date:"d M Y H:i" }}</small><br>
+                                {% if form.instance.closed_date %}
+                                <small class="text-success">Cerrado el: {{ form.instance.closed_date|date:"d M Y H:i" }}</small>
+                                {% endif %}
+                                {% endif %}
+                            </div>
+                            <div class="gap-2 d-flex">
+                                <a href="{% url 'scrum:kanban' sprint.pk %}" class="btn btn-secondary">Cancelar</a>
+                                <button type="submit" class="btn btn-primary">Guardar Ticket</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addButton = document.getElementById('add-criterion-btn');
+    const container = document.getElementById('criterion-formset-container');
+    const totalForms = document.getElementById('id_criteria-TOTAL_FORMS');
+
+    addButton.addEventListener('click', function() {
+        const currentFormCount = parseInt(totalForms.value);
+        const forms = container.getElementsByClassName('criterion-form-row');
+        const emptyForm = forms[0].cloneNode(true);
+
+        const inputs = emptyForm.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            if (input.type !== 'hidden' || input.name.includes('-id')) {
+                input.value = '';
+            }
+            if (input.name) {
+                input.name = input.name.replace(/-\d+-/, `-${currentFormCount}-`);
+            }
+            if (input.id) {
+                input.id = input.id.replace(/-\d+-/, `-${currentFormCount}-`);
+            }
+        });
+
+        // Eliminar checkbox de "delete" clonado si existe
+        const deleteCheckbox = emptyForm.querySelector('.form-check');
+        if(deleteCheckbox) deleteCheckbox.remove();
+
+        container.appendChild(emptyForm);
+        totalForms.value = currentFormCount + 1;
+    });
+});
+</script>
+{% endblock %}

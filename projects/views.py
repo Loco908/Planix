@@ -48,6 +48,7 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         # Check if current user is PM for this project to conditionally render UI elements
         context['is_pm'] = self.object.members.filter(user=self.request.user, role='PM').exists()
+        context['is_pm_or_po'] = self.object.members.filter(user=self.request.user, role__in=['PM', 'PO']).exists()
         return context
 
 class ProjectMemberCreateView(LoginRequiredMixin, CreateView):

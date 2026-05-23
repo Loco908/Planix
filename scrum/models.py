@@ -13,13 +13,53 @@ class Sprint(models.Model):
         return f"{self.name} ({self.project.name})"
 
 class UserStory(models.Model):
+    STATUS_CHOICES = [
+        ('Pendiente', 'Pendiente'),
+        ('En desarrollo', 'En desarrollo'),
+        ('Concluida', 'Concluida'),
+    ]
+    VALUE_CHOICES = [
+        ('Alta', 'Alta'),
+        ('Media', 'Media'),
+        ('Baja', 'Baja'),
+    ]
+    EFFORT_CHOICES = [
+        (1, '1'),
+        (2, '2'),
+        (4, '4'),
+        (6, '6'),
+        (8, '8'),
+        (10, '10'),
+        (20, '20'),
+    ]
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='stories')
     title = models.CharField(max_length=200)
     description = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pendiente')
+    value = models.CharField(max_length=10, choices=VALUE_CHOICES, default='Media')
+    effort = models.IntegerField(choices=EFFORT_CHOICES, default=1)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    @property
+    def get_code(self):
+        return f"HU-{self.id:02d}" if self.id else ""
+
     def __str__(self):
-        return self.title
+        return f"{self.get_code} - {self.title}"
+
+class UserStoryTask(models.Model):
+    user_story = models.ForeignKey(UserStory, on_delete=models.CASCADE, related_name='tasks')
+    description = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.description
+
+class AcceptanceCriterion(models.Model):
+    user_story = models.ForeignKey(UserStory, on_delete=models.CASCADE, related_name='criteria')
+    description = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.description
 
 class Ticket(models.Model):
     STATUS_CHOICES = [

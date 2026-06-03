@@ -5,6 +5,7 @@ Esta guía detalla los pasos y requisitos para ejecutar y mantener la aplicació
 ## Requisitos del Sistema
 - **Python**: 3.11
 - **Dependencias principales**: Django (>=4.2, <5.0), gunicorn, social-auth-app-django.
+- **Estructura del Código**: Las aplicaciones (`projects`, `scrum`, `accounts`) se encuentran encapsuladas en la carpeta `app/`.
 - **Base de Datos**: SQLite (para entornos de desarrollo local; se recomienda migrar a PostgreSQL en producción).
 - **Contenerización**: Docker y Docker Compose (opcional, pero recomendado).
 

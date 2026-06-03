@@ -71,7 +71,8 @@ Tareas individuales, issues o features que se planifican en Sprints.
 - **`due_date`** (`DateField`): Fecha límite.
 - **`closed_date`** (`DateTimeField`): Fecha en que se completó.
 - **`updated_at`** (`DateTimeField`): Fecha de la última modificación (automático).
-- **`dependencies`** (`ManyToManyField` a `self`): Relación con otros tickets de los que depende para ser realizado.
+- **`dependencies`** (`ManyToManyField` a `self`): Relación con otros tickets de los que depende. El sistema **bloqueará** automáticamente cualquier cambio de estado a uno activo si las dependencias no están completadas (`Done`).
+- **`project_sequence`** (`IntegerField`): Secuencia interna para enumerar los tickets desde 1 en cada nuevo proyecto (genera códigos secuenciales por proyecto como `TK-01`).
 
 ### 5. `TicketAcceptanceCriterion`
 Criterios de aceptación específicos para un Ticket en particular.

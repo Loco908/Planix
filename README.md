@@ -8,7 +8,9 @@ Planix es una herramienta integral de gestión de proyectos de software centrada
 - **Gestión Ágil (Scrum):**
   - **Sprints:** Planifica, activa y cierra iteraciones de trabajo.
   - **Historias de Usuario (User Stories):** Define requerimientos, estima el esfuerzo y documenta criterios de aceptación.
-  - **Tickets y Tareas:** Desglosa historias de usuario en tickets accionables (Features, Artefactos, Spikes o Tasks), y haz seguimiento de su estado en el tablero.
+  - **Tickets y Tareas:** Desglosa historias de usuario en tickets accionables (Features, Artefactos, Spikes o Tasks).
+  - **Tablero Kanban:** Sigue el estado de los tickets interactuando con una interfaz nativa **Drag & Drop** que restringe movimientos no permitidos y valida dependencias automáticamente.
+  - **Dashboards y Analítica:** Paneles de métricas exclusivas para *Project Managers* (evaluación de rendimiento del equipo) y *Scrum Masters* (monitoreo del Sprint con *Burndown Chart*).
 
 ## Tecnologías Utilizadas
 

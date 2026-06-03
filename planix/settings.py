@@ -44,9 +44,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Local apps
-    'accounts',
-    'projects',
-    'scrum',
+    'app.accounts',
+    'app.projects',
+    'app.scrum',
 
     # Librería para Google Login
     'social_django',

@@ -22,15 +22,15 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # Rutas de autenticación
     path('', include('django.contrib.auth.urls')),
-    path('accounts/', include('accounts.urls')),
+    path('accounts/', include('app.accounts.urls')),
     path('social-auth/', include('social_django.urls', namespace='social')),
     
     # Rutas de la app Projects
-    path('projects/', include('projects.urls')),
+    path('projects/', include('app.projects.urls')),
     
     # Rutas de la app Scrum (Backlog, Kanban, etc.)
-    path('scrum/', include('scrum.urls')),
+    path('scrum/', include('app.scrum.urls')),
     
     # Redirigir inicio a proyectos (o login si no está autenticado)
-    path('', include('projects.urls')),
+    path('', include('app.projects.urls')),
 ]

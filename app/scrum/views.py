@@ -6,7 +6,7 @@ from django.contrib import messages
 
 from .models import UserStory
 from .forms import UserStoryForm, UserStoryTaskFormSet, AcceptanceCriterionFormSet
-from projects.models import Project
+from app.projects.models import Project
 
 class UserStoryCreateView(LoginRequiredMixin, CreateView):
     model = UserStory

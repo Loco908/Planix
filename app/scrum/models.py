@@ -111,10 +111,18 @@ class Ticket(models.Model):
     closed_date = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
     dependencies = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='dependents')
+    project_sequence = models.IntegerField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.project_sequence and self.user_story_id:
+            max_seq = Ticket.objects.filter(user_story__project=self.user_story.project).aggregate(models.Max('project_sequence'))['project_sequence__max']
+            self.project_sequence = (max_seq or 0) + 1
+        super().save(*args, **kwargs)
 
     @property
     def get_code(self):
-        return f"TK-{self.id:02d}" if self.id else ""
+        seq = self.project_sequence if self.project_sequence else self.id
+        return f"TK-{seq:02d}" if seq else ""
 
     @property
     def remaining_days(self):

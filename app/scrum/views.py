@@ -418,11 +418,11 @@ class TicketStatusAjaxUpdateView(LoginRequiredMixin, View):
             if ticket.assigned_to != request.user:
                 return JsonResponse({'error': 'Solo el desarrollador asignado, PM o TL pueden mover este ticket.'}, status=403)
 
-        if new_status == 'Done':
+        if new_status in ['Doing', 'Review', 'Testing', 'Done']:
             pending_deps = ticket.dependencies.exclude(status='Done')
             if pending_deps.exists():
                 dep_names = ", ".join([d.get_code for d in pending_deps])
-                return JsonResponse({'error': f'No se puede mover a Done. Faltan dependencias por completar: {dep_names}.'}, status=400)
+                return JsonResponse({'error': f'No se puede mover a {new_status}. Faltan dependencias por completar: {dep_names}.'}, status=400)
 
         if new_status == 'Done' and not ticket.closed_date:
             ticket.closed_date = datetime.datetime.now()

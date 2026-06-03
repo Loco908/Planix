@@ -80,4 +80,98 @@
         {% include "scrum/_kanban_column.html" with title="Done" tickets=done %}
     </div>
 </div>
+
+<!-- CSRF Token para AJAX -->
+<script>
+    const csrfToken = '{{ csrf_token }}';
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const cards = document.querySelectorAll('.kanban-card');
+    const columns = document.querySelectorAll('.kanban-column');
+
+    cards.forEach(card => {
+        card.addEventListener('dragstart', dragStart);
+        card.addEventListener('dragend', dragEnd);
+    });
+
+    columns.forEach(column => {
+        column.addEventListener('dragover', dragOver);
+        column.addEventListener('dragenter', dragEnter);
+        column.addEventListener('dragleave', dragLeave);
+        column.addEventListener('drop', drop);
+    });
+
+    let draggedCard = null;
+
+    function dragStart(e) {
+        draggedCard = this;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', this.id);
+        setTimeout(() => this.style.opacity = '0.5', 0);
+    }
+
+    function dragEnd(e) {
+        this.style.opacity = '1';
+        draggedCard = null;
+        columns.forEach(col => col.style.backgroundColor = '#f4f5f7');
+    }
+
+    function dragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        return false;
+    }
+
+    function dragEnter(e) {
+        e.preventDefault();
+        this.style.backgroundColor = '#e2e4e9';
+    }
+
+    function dragLeave(e) {
+        this.style.backgroundColor = '#f4f5f7';
+    }
+
+    function drop(e) {
+        e.stopPropagation();
+        this.style.backgroundColor = '#f4f5f7';
+        
+        if (draggedCard) {
+            const newStatus = this.getAttribute('data-status');
+            const ticketId = draggedCard.getAttribute('data-ticket-id');
+            const originalColumn = draggedCard.parentElement;
+            
+            // Move temporarily
+            const cardsContainer = this.querySelector('.kanban-cards');
+            cardsContainer.appendChild(draggedCard);
+
+            // AJAX request to update status
+            fetch(`/scrum/ticket/${ticketId}/ajax_status/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ 'status': newStatus })
+            })
+            .then(response => response.json().then(data => ({status: response.status, body: data})))
+            .then(res => {
+                if (res.status === 200) {
+                    // Success, optionally show toast or just keep it
+                } else {
+                    // Revert move
+                    originalColumn.appendChild(document.getElementById(`ticket-${ticketId}`));
+                    alert('Error: ' + res.body.error);
+                }
+            })
+            .catch(error => {
+                originalColumn.appendChild(document.getElementById(`ticket-${ticketId}`));
+                alert('Ocurrió un error al intentar mover el ticket.');
+            });
+        }
+        return false;
+    }
+});
+</script>
 {% endblock %}

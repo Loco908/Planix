@@ -29,6 +29,10 @@
                     <p class="mb-3"><strong>Fin:</strong> {{ sprint.end_date|date:"d M Y" }}</p>
                     
                     <a href="{% url 'scrum:kanban' sprint.pk %}" class="btn btn-outline-primary w-100 mb-2">Ver Tablero Kanban</a>
+                    <div class="d-flex gap-2 mb-2">
+                        <a href="{% url 'scrum:sm_dashboard' sprint.pk %}" class="btn btn-sm btn-outline-info w-50" title="Scrum Master">SM Dashboard</a>
+                        <a href="{% url 'scrum:pm_dashboard' sprint.pk %}" class="btn btn-sm btn-outline-success w-50" title="Project Manager">PM Dashboard</a>
+                    </div>
                     
                     {% if is_pm %}
                     <a href="{% url 'scrum:sprint_edit' sprint.pk %}" class="btn btn-outline-secondary w-100">Editar Sprint</a>

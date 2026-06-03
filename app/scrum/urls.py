@@ -19,4 +19,7 @@ urlpatterns = [
     path('ticket/<int:pk>/edit/', views.TicketUpdateView.as_view(), name='ticket_edit'),
     path('ticket/<int:pk>/delete/', views.TicketDeleteView.as_view(), name='ticket_delete'),
     path('ticket/<int:pk>/status/', views.TicketStatusUpdateView.as_view(), name='ticket_status'),
+    path('ticket/<int:pk>/ajax_status/', views.TicketStatusAjaxUpdateView.as_view(), name='ticket_status_ajax'),
+    path('sprint/<int:pk>/sm-dashboard/', views.ScrumMasterDashboardView.as_view(), name='sm_dashboard'),
+    path('sprint/<int:pk>/pm-dashboard/', views.ProjectManagerDashboardView.as_view(), name='pm_dashboard'),
 ]

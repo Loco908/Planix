@@ -1,11 +1,11 @@
-<div class="kanban-column">
+<div class="kanban-column" data-status="{{ title }}">
     <div class="kanban-column-header d-flex justify-content-between">
         <span>{{ title }}</span>
         <span class="badge bg-secondary rounded-pill">{{ tickets.count }}</span>
     </div>
     <div class="kanban-cards">
         {% for ticket in tickets %}
-        <div class="kanban-card {% if ticket.assigned_to == request.user %}assigned-to-me{% endif %} {% if ticket.status == 'Blocked' %}blocked{% endif %}">
+        <div class="kanban-card {% if ticket.assigned_to == request.user %}assigned-to-me{% endif %} {% if ticket.status == 'Blocked' %}blocked{% endif %}" draggable="true" data-ticket-id="{{ ticket.pk }}" id="ticket-{{ ticket.pk }}">
             <div class="d-flex justify-content-between align-items-start mb-1">
                 <span class="ticket-id">{{ ticket.get_code }}</span>
                 <span class="badge bg-info text-dark" style="font-size:0.7rem;">{{ ticket.type }}</span>
@@ -31,8 +31,8 @@
                 <span class="badge bg-light text-dark border">{{ ticket.effort }} hrs</span>
             </div>
 
-            <!-- Formulario de estado incrustado para Devs y PMs -->
-            <div class="mt-2">
+            <!-- Formulario de estado incrustado para Devs y PMs (Oculto para favorecer Drag&Drop) -->
+            <div class="mt-2 d-none">
                 <form action="{% url 'scrum:ticket_status' ticket.pk %}" method="post">
                     {% csrf_token %}
                     {{ status_form.status }}

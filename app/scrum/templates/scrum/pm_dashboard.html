@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard PM - {{ sprint.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-graph-up text-success"></i> Project Manager Dashboard</h2>
+            <p class="text-muted">Sprint: {{ sprint.name }} | Proyecto: {{ sprint.project.name }}</p>
+        </div>
+        <div>
+            <a href="{% url 'scrum:sprint_list' sprint.project.pk %}" class="btn btn-outline-secondary">Volver</a>
+            <a href="{% url 'scrum:kanban' sprint.pk %}" class="btn btn-primary">Ver Kanban</a>
+        </div>
+    </div>
+
+    <!-- Resumen General -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white"><h5 class="mb-0">Resumen de Tickets</h5></div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Total de Tickets
+                            <span class="badge bg-primary rounded-pill">{{ total_tickets }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Completados
+                            <span class="badge bg-success rounded-pill">{{ completed_tickets }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Pendientes
+                            <span class="badge bg-warning text-dark rounded-pill">{{ pending_tickets }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Bloqueados
+                            <span class="badge bg-danger rounded-pill">{{ blocked_tickets }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white"><h5 class="mb-0">Resumen de Esfuerzo</h5></div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Esfuerzo Total (Puntos)
+                            <span class="badge bg-secondary rounded-pill">{{ total_effort }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Esfuerzo Completado
+                            <span class="badge bg-success rounded-pill">{{ completed_effort }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Esfuerzo Pendiente
+                            <span class="badge bg-warning text-dark rounded-pill">{{ pending_effort }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rendimiento por Integrante -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Métricas por Integrante</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Integrante</th>
+                            <th>Rol</th>
+                            <th class="text-center">Asignados</th>
+                            <th class="text-center">Completados</th>
+                            <th class="text-center">Pendientes</th>
+                            <th class="text-center">Esf. Total</th>
+                            <th class="text-center">Esf. Completado</th>
+                            <th style="width: 20%;">Avance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for member in members_metrics %}
+                        <tr>
+                            <td><strong>{{ member.name }}</strong></td>
+                            <td><span class="badge bg-secondary">{{ member.role }}</span></td>
+                            <td class="text-center">{{ member.assigned_tickets }}</td>
+                            <td class="text-center text-success">{{ member.completed_tickets }}</td>
+                            <td class="text-center text-warning">{{ member.pending_tickets }}</td>
+                            <td class="text-center">{{ member.effort_assigned }}</td>
+                            <td class="text-center">{{ member.effort_completed }}</td>
+                            <td class="align-middle">
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar {% if member.progress == 100 %}bg-success{% endif %}" role="progressbar" style="width: {{ member.progress }}%;"></div>
+                                </div>
+                                <small class="text-muted">{{ member.progress }}%</small>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted">No hay métricas disponibles (Nadie tiene tickets asignados).</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

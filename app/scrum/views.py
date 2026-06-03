@@ -385,3 +385,145 @@ class KanbanView(LoginRequiredMixin, ListView):
         context['status_form'] = TicketStatusForm()
         return context
 
+# --- NEW FEATURES: AJAX STATUS UPDATE & DASHBOARDS ---
+import json
+from django.http import JsonResponse
+from django.views.generic import View, DetailView
+from django.db.models import Sum
+from django.db.models.functions import TruncDate
+from django.utils import timezone
+import datetime
+
+class TicketStatusAjaxUpdateView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        ticket = get_object_or_404(Ticket, pk=self.kwargs['pk'])
+        sprint = ticket.sprint
+        project = sprint.project
+        
+        try:
+            data = json.loads(request.body)
+            new_status = data.get('status')
+        except:
+            return JsonResponse({'error': 'Datos inválidos.'}, status=400)
+            
+        if new_status not in dict(Ticket.STATUS_CHOICES).keys():
+            return JsonResponse({'error': 'Estado inválido.'}, status=400)
+
+        member = project.members.filter(user=request.user).first()
+        if not member:
+            return JsonResponse({'error': 'No eres miembro del proyecto.'}, status=403)
+            
+        role = member.role
+        if role not in ['PM', 'TL']:
+            if ticket.assigned_to != request.user:
+                return JsonResponse({'error': 'Solo el desarrollador asignado, PM o TL pueden mover este ticket.'}, status=403)
+
+        if new_status == 'Done':
+            pending_deps = ticket.dependencies.exclude(status='Done')
+            if pending_deps.exists():
+                dep_names = ", ".join([d.get_code for d in pending_deps])
+                return JsonResponse({'error': f'No se puede mover a Done. Faltan dependencias por completar: {dep_names}.'}, status=400)
+
+        if new_status == 'Done' and not ticket.closed_date:
+            ticket.closed_date = datetime.datetime.now()
+        ticket.status = new_status
+        ticket.save()
+        
+        return JsonResponse({'success': True, 'message': 'Estado actualizado.'})
+
+class ScrumMasterDashboardView(LoginRequiredMixin, DetailView):
+    model = Sprint
+    template_name = 'scrum/sm_dashboard.html'
+    context_object_name = 'sprint'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        sprint = self.object
+        tickets = sprint.tickets.all()
+        
+        context['total_tickets'] = tickets.count()
+        context['completed_tickets'] = tickets.filter(status='Done').count()
+        context['pending_tickets'] = tickets.exclude(status='Done').count()
+        context['blocked_tickets'] = tickets.filter(status='Blocked').count()
+        
+        context['progress_percentage'] = 0
+        if context['total_tickets'] > 0:
+            context['progress_percentage'] = int((context['completed_tickets'] / context['total_tickets']) * 100)
+            
+        context['total_effort'] = tickets.aggregate(Sum('effort'))['effort__sum'] or 0
+        context['completed_effort'] = tickets.filter(status='Done').aggregate(Sum('effort'))['effort__sum'] or 0
+        context['pending_effort'] = context['total_effort'] - context['completed_effort']
+
+        if sprint.start_date and sprint.end_date:
+            days = (sprint.end_date - sprint.start_date).days
+            labels = []
+            planned_data = []
+            real_data = []
+            
+            total = context['total_effort']
+            daily_burn = total / max(days, 1)
+            current_effort = total
+            
+            closed_tickets = tickets.filter(status='Done', closed_date__isnull=False).annotate(close_day=TruncDate('closed_date'))
+            
+            for i in range(days + 1):
+                day = sprint.start_date + datetime.timedelta(days=i)
+                labels.append(day.strftime('%d %b'))
+                
+                planned_val = max(0, total - (daily_burn * i))
+                planned_data.append(round(planned_val, 1))
+                
+                if day <= datetime.date.today():
+                    day_closed = closed_tickets.filter(close_day=day).aggregate(Sum('effort'))['effort__sum'] or 0
+                    current_effort -= day_closed
+                    real_data.append(current_effort)
+                else:
+                    real_data.append(None)
+                    
+            context['burndown_labels'] = json.dumps(labels)
+            context['burndown_planned'] = json.dumps(planned_data)
+            context['burndown_real'] = json.dumps(real_data)
+            
+        return context
+
+class ProjectManagerDashboardView(LoginRequiredMixin, DetailView):
+    model = Sprint
+    template_name = 'scrum/pm_dashboard.html'
+    context_object_name = 'sprint'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        sprint = self.object
+        tickets = sprint.tickets.all()
+        
+        context['total_tickets'] = tickets.count()
+        context['completed_tickets'] = tickets.filter(status='Done').count()
+        context['pending_tickets'] = tickets.exclude(status='Done').count()
+        context['blocked_tickets'] = tickets.filter(status='Blocked').count()
+        
+        context['total_effort'] = tickets.aggregate(Sum('effort'))['effort__sum'] or 0
+        context['completed_effort'] = tickets.filter(status='Done').aggregate(Sum('effort'))['effort__sum'] or 0
+        context['pending_effort'] = context['total_effort'] - context['completed_effort']
+
+        members_metrics = []
+        for member in sprint.project.members.all():
+            member_tickets = tickets.filter(assigned_to=member.user)
+            if member_tickets.exists():
+                assigned = member_tickets.count()
+                completed = member_tickets.filter(status='Done').count()
+                pending = assigned - completed
+                eff_assigned = member_tickets.aggregate(Sum('effort'))['effort__sum'] or 0
+                eff_completed = member_tickets.filter(status='Done').aggregate(Sum('effort'))['effort__sum'] or 0
+                members_metrics.append({
+                    'name': member.user.username,
+                    'role': member.get_role_display(),
+                    'assigned_tickets': assigned,
+                    'completed_tickets': completed,
+                    'pending_tickets': pending,
+                    'effort_assigned': eff_assigned,
+                    'effort_completed': eff_completed,
+                    'progress': int((completed/assigned)*100) if assigned > 0 else 0
+                })
+        
+        context['members_metrics'] = members_metrics
+        return context

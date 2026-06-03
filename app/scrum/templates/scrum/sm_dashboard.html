@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard SM - {{ sprint.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-speedometer2 text-primary"></i> Scrum Master Dashboard</h2>
+            <p class="text-muted">Sprint: {{ sprint.name }} | Fechas: {{ sprint.start_date|date:"d M" }} - {{ sprint.end_date|date:"d M" }}</p>
+        </div>
+        <div>
+            <a href="{% url 'scrum:sprint_list' sprint.project.pk %}" class="btn btn-outline-secondary">Volver</a>
+            <a href="{% url 'scrum:kanban' sprint.pk %}" class="btn btn-primary">Ver Kanban</a>
+        </div>
+    </div>
+
+    <!-- Metricas Principales -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">Avance del Sprint</h6>
+                    <h2 class="mb-0">{{ progress_percentage }}%</h2>
+                    <div class="progress mt-2" style="height: 5px;">
+                        <div class="progress-bar bg-white" role="progressbar" style="width: {{ progress_percentage }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">Completados</h6>
+                    <h2 class="mb-0">{{ completed_tickets }} <small class="fs-6">/ {{ total_tickets }} tickets</small></h2>
+                    <div class="mt-2 text-white-50"><i class="bi bi-check-circle"></i> {{ completed_effort }} pts esfuerzo</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">Pendientes</h6>
+                    <h2 class="mb-0">{{ pending_tickets }} <small class="fs-6">tickets</small></h2>
+                    <div class="mt-2 text-dark-50"><i class="bi bi-clock"></i> {{ pending_effort }} pts esfuerzo</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">Bloqueados</h6>
+                    <h2 class="mb-0">{{ blocked_tickets }} <small class="fs-6">tickets</small></h2>
+                    <div class="mt-2 text-white-50"><i class="bi bi-exclamation-triangle"></i> Requieren atención</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Burndown Chart -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Burndown Chart</h5>
+        </div>
+        <div class="card-body">
+            {% if total_tickets > 0 %}
+                <canvas id="burndownChart" height="100"></canvas>
+            {% else %}
+                <div class="alert alert-info">No hay tickets en este sprint para graficar.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    {% if total_tickets > 0 and burndown_labels %}
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('burndownChart').getContext('2d');
+        const labels = {{ burndown_labels|safe }};
+        const plannedData = {{ burndown_planned|safe }};
+        const realData = {{ burndown_real|safe }};
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Trabajo Planeado (Esfuerzo)',
+                        data: plannedData,
+                        borderColor: '#adb5bd',
+                        borderDash: [5, 5],
+                        fill: false,
+                        tension: 0
+                    },
+                    {
+                        label: 'Avance Real (Esfuerzo Restante)',
+                        data: realData,
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        fill: true,
+                        tension: 0.1,
+                        pointBackgroundColor: '#0d6efd',
+                        pointRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Esfuerzo (Puntos)' }
+                    },
+                    x: {
+                        title: { display: true, text: 'Días del Sprint' }
+                    }
+                }
+            }
+        });
+    });
+    {% endif %}
+</script>
+{% endblock %}
